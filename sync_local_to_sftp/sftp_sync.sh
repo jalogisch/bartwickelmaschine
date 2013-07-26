@@ -21,13 +21,13 @@
 
 
 
-TARGETSRV=some.host.tld # including e.g. target.srv
-TARGETUSR=jalogisch # username for target.srv
+TARGETSRV=safe.jalogisch.tld # including e.g. target.srv
+TARGETUSR=jd # username for target.srv
 TARGETPORT=22 # SSH Listen Port 
 SSHKEYFILE=/home/jd/.ssh/sftp_sync # lockablecate the sshkeyfile to use
-TARGETDIR=/var/home/jd/tmpdir # where should the files goto
-SOURCEDIR=$(pwd) # Where are the Source files to Copy?
-
+TARGETDIR=/var/home/jd/safe # where should the files goto
+SOURCEDIR=~/tmp # Where are the Source files to Copy?
+ARCHIVDIR=/tmp/archiv/$(date +%Y-%m) # if not present will be created
 
 ### HEADER ###
 LOCKFILE="/var/lock/$(basename $0)"
@@ -62,7 +62,7 @@ wlog()  {
 # Housekeeping
 create_workdir()    {
     _create_workdir || { wlog "create of workdir not possible"; exit 1; }
-    trap _delete_workdir EXIT;
+    trap _delete_workdir 0;
 }
 
 
@@ -73,14 +73,19 @@ exlock_now || { wlog "no lock possible"; exit 1; }
 # Test some Local 
 [[  -d $WORKDIR ]] || { wlog "no workdir present"; exit 1; }
 [[  -d $SOURCEDIR ]] || { wlog "no localdir present"; exit 1; }
-[[  -f $SSHKEYFILE ]] || { wlog "no sshkey present"; exit 1; }
-
+#[[  -f $SSHKEYFILE ]] || { wlog "no sshkey present"; exit 1; }
+[[ -d ${ARCHIVDIR} ]] || mkdir -p ${ARCHIVDIR}
 
 # Build Filelist
-for i in $(ls -x -1 $SOURCEDIR)
+# TODO: make this one more pretty maybe to use the same file for backup
+for i in $(find ${SOURCEDIR} -maxdepth 1 -type f)
 do
-         echo "put $SOURCEDIR/$i" >> $WORKDIR/files
-    done
+         echo "put $i" >> $WORKDIR/files
+         echo "$i" >> ${WORKDIR}/cfiles
+done
+
+# check if any files are present
+[[ -f ${WORKDIR}/files ]] || { wlog "no files found, no more work"; exit 0; }
 
 # Build the Batch/Upload
 #echo "mkdir $TARGETDIR" >> $WORKDIR/batchfile # raise error if exists
@@ -88,12 +93,19 @@ echo "cd $TARGETDIR" >> $WORKDIR/batchfile
 cat $WORKDIR/files >> $WORKDIR/batchfile
 echo "exit" >> $WORKDIR/batchfile
 
-# hier ist der eigentliche upload auf den backup-server
+# This does the Upload to SFTP Server
+# TODO: Test if the Server is available needed?
 sftp -q -C -b $WORKDIR/batchfile -o PubkeyAuthentication=yes -o IdentityFile=$SSHKEYFILE -o Port=$TARGETPORT $TARGETUSR@$TARGETSRV > $WORKDIR/sftp_log || { wlog "Error during Upload"; exit 1; }
 
-# copy the files to archive folder 
+# copy the files to archive folder that should be transfered
+for D in $(cat ${WORKDIR}/cfiles)
+    do
+        mv ${D} ${ARCHIVDIR} || { wlog "Could not copy ${D} to archive"; exit 1;}
+done
 
-# mail output of the logfile if wanted
+# mail output of the logfile 
+#cat ${WORKDIR}/sftp_log | mailx -vs "transferlog" jd@jalogisch.de
+
 
 set +u
 exit 0
