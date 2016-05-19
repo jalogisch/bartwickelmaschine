@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/jalogisch/bartwickelmaschine.png?label=ready&title=Ready)](https://waffle.io/jalogisch/bartwickelmaschine)
 bartwickelmaschine
 ==================
 
