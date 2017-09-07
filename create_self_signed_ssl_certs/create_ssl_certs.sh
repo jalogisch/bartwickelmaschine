@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 #
 # This scrip generate self-signed certificate to be used in development.
@@ -77,10 +77,10 @@ if [ -n "${MMODE}" ]; then
   # take all IP Adresses returned by the command IP into the list
   # first check if all binaries are present that are needed
   # (when only bash build-ins are needed would be awesome)
-  IPCMD=$(which ip)
-  GRPCMD=$(which grep)
-  AWKCMD=$(which awk)
-  CUTCMD=$(which cut)
+  IPCMD=$(type -p ip)
+  GRPCMD=$(type -p grep)
+  AWKCMD=$(type -p  awk)
+  CUTCMD=$(type -p cut)
 
   if [ -n "${IPCMD}" ] && [ -n "${GRPCMD}" ] && [ -n "${AWKCMD}" ] && [ -n "${CUTCMD}" ]; then
     # to avoid error output in the array 2>/dev/null
