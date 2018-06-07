@@ -49,7 +49,7 @@ if [ -n "${MMODE}" ]; then
 
   "
 
-  HOSTNAME_BIN=$(which hostname)
+  HOSTNAME_BIN=$(type -p hostname)
 
   # possible addition
   #
@@ -58,7 +58,7 @@ if [ -n "${MMODE}" ]; then
 
   if [ -n "${HOSTNAME_BIN}" ];then
     HNAME+=("$(hostname -s)")
-    HNAME+=("$(hostname -f)")
+    HNAME+=("$(hostname -A)")
     # add localhost as hostname to easy up debugging
     HNAME+=(localhost)
     # try if hostname -I returns the IP, if not
@@ -117,8 +117,8 @@ fi
 
 
 # sort array entries and make them uniq
-NAMES=($(printf "DNS:%q\n" "${HNAME[@]}" | sort -u))
-IPADD=($(printf "IP:%q\n" "${HIP[@]}" | sort -u))
+NAMES=($(printf "DNS:%q\n" ${HNAME[@]} | sort -u))
+IPADD=($(printf "IP:%q\n" ${HIP[@]} | sort -u))
 
 # print each elemet of both arrays with comma seperator
 # and create a string from the array content
